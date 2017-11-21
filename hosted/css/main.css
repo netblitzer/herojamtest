@@ -1,0 +1,24 @@
+.icon-block {
+  padding: 0 15px; }
+  .icon-block .material-icons {
+    font-size: inherit; }
+    .icon-block .material-icons.xlarge {
+      font-size: 10rem; }
+
+.parallax-container .valign-wrapper {
+  height: 100%; }
+
+.parallax .parallaxImage {
+  display: block;
+  opacity: 0.5;
+  transform: translate3d(-50%, 233px, 0px); }
+
+.space-gap {
+  height: 10px; }
+
+.centered-button {
+  left: 50%;
+  transform: translateX(-50%); }
+
+#sponsorsContainer {
+  height: 100px; }
