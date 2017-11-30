@@ -19,7 +19,7 @@ gulp.task('lint', () => {
 });
 
 gulp.task('js', () => {
-  gulp.src(`./${config.staticAssets.path}**/*.js`)
+  gulp.src(`./${config.staticAssets.path}js/*.js`)
     .pipe(babel({
       presets: ['env', 'react'],
     }))
@@ -34,7 +34,7 @@ gulp.task('build', () => {
 
 gulp.task('watch', () => {
   gulp.watch(`./${config.staticAssets.path}scss/main.scss`, ['sass']);
-  gulp.watch(`./${config.staticAssets.path}**/*.js`, ['js']);
+  gulp.watch(`./${config.staticAssets.path}js/*.js`, ['js']);
   
   nodemon({
     script: './server/app.js',
@@ -48,6 +48,6 @@ gulp.task('watch-sass', () => {
 });
 
 gulp.task('watch-js', () => {
-  gulp.watch(`./${config.staticAssets.path}**/*.js`, ['js']);
+  gulp.watch(`./${config.staticAssets.path}js/*.js`, ['js']);
 });
 

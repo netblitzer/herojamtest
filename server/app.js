@@ -18,12 +18,12 @@ const port = process.env.PORT || process.env.NODE_PORT || 3000;
 // const dbURL = process.env.MONGODB_URI || 'mongodb://localhost/DomoMaker';
 
 // connect to database
-/* mongoose.connect(dbURL, (err) => {
+mongoose.connect(config.dburl, (err) => {
   if (err) {
     console.log('Could not connect to database');
     throw err;
   }
-});*/
+});
 
 // connect to redis
 let redisURL = {
@@ -53,9 +53,9 @@ app.use(bodyParser.urlencoded({
 app.use(session({
   key: 'sessionid',
   store: new RedisStore({
-    host: redisURL.hostname,
-    port: redisURL.port,
-    pass: redisPASS,
+    host: config.redis.host,
+    port: config.redis.port,
+    pass: config.redis.pass,
   }),
   secret: config.sessions.secret,
   resave: true,

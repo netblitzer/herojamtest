@@ -57,13 +57,13 @@ const DB = {
   // your environment with malformed data)
   development: {
     host: 'localhost',
-    database: 'dev_dbName',
+    database: 'dev_HeroJam',
   },
   // test database (use a different database for each so you don't pollute
   // your environment with malformed data)
   test: {
     host: 'localhost',
-    database: 'test_dbName',
+    database: 'test_HeroJam',
   },
   // staging database (use a different database for each so you don't pollute
   // your environment with malformed data)
