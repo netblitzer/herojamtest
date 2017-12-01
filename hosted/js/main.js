@@ -18,6 +18,9 @@ var openSignupForm = function openSignupForm() {
       case 'Donate':
         prevPage = $('#donateWrapper');
         break;
+      case 'Profile':
+        prevPage = $('#profileWrapper');
+        break;
     }
     // change page
     state.page = 'Sign Up';
@@ -56,6 +59,7 @@ var openSignupForm = function openSignupForm() {
       $('#navProgress .progress').removeClass('shown');
 
       ReactDOM.render(React.createElement(NavForm, null), document.querySelector('#head'));
+      ReactDOM.render(React.createElement(LoginForm, { csrf: state.csrf }), document.querySelector('#loginContainer'));
     };
 
     // start the chain
@@ -80,6 +84,9 @@ var openMainForm = function openMainForm() {
         break;
       case 'Donate':
         prevPage = $('#donateWrapper');
+        break;
+      case 'Profile':
+        prevPage = $('#profileWrapper');
         break;
     }
     // change page
@@ -153,6 +160,9 @@ var openAboutForm = function openAboutForm() {
       case 'Donate':
         prevPage = $('#donateWrapper');
         break;
+      case 'Profile':
+        prevPage = $('#profileWrapper');
+        break;
     }
     // change page
     state.page = 'About';
@@ -216,6 +226,9 @@ var openDonateForm = function openDonateForm() {
       case 'Home':
         prevPage = $('#homeWrapper');
         break;
+      case 'Profile':
+        prevPage = $('#profileWrapper');
+        break;
     }
     // change page
     state.page = 'Donate';
@@ -274,9 +287,82 @@ var ProgressForm = function ProgressForm(props) {
 };
 
 var MainForm = function MainForm(props) {
+
+  console.dir(state);
+
+  var centerRow = void 0;
+  if (state.loggedIn) {
+
+    console.dir(state);
+    centerRow = function () {
+      return React.createElement(
+        'div',
+        { className: 'row center' },
+        React.createElement(
+          'div',
+          { className: 'col s4 m2 offset-s4 offset-m5' },
+          React.createElement(
+            'a',
+            { className: 'btn-large waves-effect waves-light orange lighten-1',
+              onClick: function onClick() {} },
+            'Donate'
+          )
+        )
+      );
+    }();
+  } else {
+    centerRow = function () {
+      return React.createElement(
+        'div',
+        { className: 'row center' },
+        React.createElement(
+          'div',
+          { className: 'col s4 m2 offset-m4 offset-s1' },
+          React.createElement(
+            'a',
+            { href: '#',
+              id: 'largeSignUp',
+              className: 'btn-large waves-effect waves-light orange lighten-1',
+              onClick: openSignupForm },
+            'Sign up'
+          )
+        ),
+        React.createElement(
+          'div',
+          { className: 'col m2 hide-on-small-only' },
+          React.createElement(
+            'a',
+            { href: '#',
+              id: 'largeLogIn',
+              className: 'btn-large waves-effect waves-light orange lighten-1',
+              onClick: function onClick() {
+                toggleLoginForm(true);
+              } },
+            'Log in'
+          )
+        ),
+        React.createElement(
+          'div',
+          { className: 'col s4 offset-s2 hide-on-med-and-up' },
+          React.createElement(
+            'a',
+            { href: '#',
+              id: 'largeLogIn',
+              className: 'btn-large waves-effect waves-light orange lighten-1',
+              onClick: function onClick() {
+                toggleLoginForm(true);
+              } },
+            'Log in'
+          )
+        )
+      );
+    }();
+  }
+  console.dir(state.loggedIn);
+
   return React.createElement(
     'div',
-    { id: 'homeWrapper' },
+    { id: 'homeWrapper', className: 'pageWrapper' },
     React.createElement(
       'div',
       { className: 'parallax-container' },
@@ -294,50 +380,7 @@ var MainForm = function MainForm(props) {
             'It doesn\'t take much to be a hero.'
           ),
           React.createElement('br', null),
-          React.createElement(
-            'div',
-            { className: 'row center' },
-            React.createElement(
-              'div',
-              { className: 'col s4 m2 offset-m4 offset-s1' },
-              React.createElement(
-                'a',
-                { href: '#',
-                  id: 'largeSignUp',
-                  className: 'btn-large waves-effect waves-light orange lighten-1',
-                  onClick: openSignupForm },
-                'Sign up'
-              )
-            ),
-            React.createElement(
-              'div',
-              { className: 'col m2 hide-on-small-only' },
-              React.createElement(
-                'a',
-                { href: '#',
-                  id: 'largeLogIn',
-                  className: 'btn-large waves-effect waves-light orange lighten-1',
-                  onClick: function onClick() {
-                    toggleLoginForm(true);
-                  } },
-                'Log in'
-              )
-            ),
-            React.createElement(
-              'div',
-              { className: 'col s4 offset-s2 hide-on-med-and-up' },
-              React.createElement(
-                'a',
-                { href: '#',
-                  id: 'largeLogIn',
-                  className: 'btn-large waves-effect waves-light orange lighten-1',
-                  onClick: function onClick() {
-                    toggleLoginForm(true);
-                  } },
-                'Log in'
-              )
-            )
-          ),
+          centerRow,
           React.createElement('br', null),
           React.createElement('br', null)
         )
@@ -769,7 +812,7 @@ var buildHomePage = function buildHomePage(csrf) {
   state.csrf = csrf;
 
   // render all the parts
-  ReactDOM.render(React.createElement(NavForm, null), document.querySelector('#head'));
+  ReactDOM.render(React.createElement(NavForm, null), document.querySelector('#head'), checkIfLoggedIn);
   ReactDOM.render(React.createElement(MainForm, { csrf: csrf }), document.querySelector('#rendered'),
   // callback for the main content
   function () {
@@ -784,12 +827,6 @@ var buildHomePage = function buildHomePage(csrf) {
     dist: 0,
     padding: 100,
     indicators: true
-  });
-};
-
-var getToken = function getToken() {
-  sendAjax('GET', 'getToken', null, function (result) {
-    buildHomePage(result.csrfToken);
   });
 };
 

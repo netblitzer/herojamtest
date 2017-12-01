@@ -5,17 +5,12 @@ const compression = require('compression');
 // const favicon = require('serve-favicon');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-// const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const session = require('express-session');
 const RedisStore = require('connect-redis')(session);
-const url = require('url');
 const csrf = require('csurf');
 
 const config = require('./config.js');
-
-const port = process.env.PORT || process.env.NODE_PORT || 3000;
-
-// const dbURL = process.env.MONGODB_URI || 'mongodb://localhost/DomoMaker';
 
 // connect to database
 mongoose.connect(config.dburl, (err) => {
@@ -24,19 +19,6 @@ mongoose.connect(config.dburl, (err) => {
     throw err;
   }
 });
-
-// connect to redis
-let redisURL = {
-  hostname: 'localhost',
-  port: 6379,
-};
-
-let redisPASS;
-
-if (process.env.REDISCLOUD_URL) {
-  redisURL = url.parse(process.env.REDISCLOUD_URL);
-  redisPASS = redisURL.auth.split(':')[1];
-}
 
 // pull in our routes
 const router = require('./router.js');
@@ -79,8 +61,10 @@ app.use((err, req, res, next) => {
 
 router(app);
 
-app.listen(port, (err) => {
+app.listen(config.http.port, (err) => {
   if (err) {
     throw err;
   }
+
+  console.log(`Listening on ${config.http.baseUrl}`);
 });

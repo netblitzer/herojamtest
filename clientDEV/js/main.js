@@ -16,6 +16,9 @@ const openSignupForm = () => {
       case 'Donate':
         prevPage = $('#donateWrapper');
         break;
+      case 'Profile':
+        prevPage = $('#profileWrapper');
+        break;
     }
     // change page
     state.page = 'Sign Up';
@@ -65,6 +68,10 @@ const openSignupForm = () => {
         <NavForm />,
         document.querySelector('#head'),
       );
+      ReactDOM.render(
+        <LoginForm csrf={state.csrf} />,
+        document.querySelector('#loginContainer'),
+      );
     };
     
     // start the chain
@@ -89,6 +96,9 @@ const openMainForm = () => {
         break;
       case 'Donate':
         prevPage = $('#donateWrapper');
+        break;
+      case 'Profile':
+        prevPage = $('#profileWrapper');
         break;
     }
     // change page
@@ -176,6 +186,9 @@ const openAboutForm = () => {
       case 'Donate':
         prevPage = $('#donateWrapper');
         break;
+      case 'Profile':
+        prevPage = $('#profileWrapper');
+        break;
     }
     // change page
     state.page = 'About';
@@ -250,6 +263,9 @@ const openDonateForm = () => {
       case 'Home':
         prevPage = $('#homeWrapper');
         break;
+      case 'Profile':
+        prevPage = $('#profileWrapper');
+        break;
     }
     // change page
     state.page = 'Donate';
@@ -319,8 +335,53 @@ const ProgressForm = (props) => {
 };
 
 const MainForm = (props) => {
+  
+  console.dir(state);
+  
+  let centerRow;
+  if (state.loggedIn) {
+  
+  console.dir(state);
+    centerRow = (() => {
+      return (
+        <div className="row center">
+          <div className="col s4 m2 offset-s4 offset-m5">
+            <a className="btn-large waves-effect waves-light orange lighten-1"
+              onClick={() => {}}>Donate</a>
+          </div>
+        </div>
+      );
+    })();
+  } else {
+    centerRow = (() => {
+      return (
+        <div className="row center">
+          <div className="col s4 m2 offset-m4 offset-s1">
+            <a href="#"
+              id="largeSignUp"
+              className="btn-large waves-effect waves-light orange lighten-1"
+              onClick={openSignupForm}>Sign up</a>
+          </div>
+          <div className="col m2 hide-on-small-only">
+            <a href="#"
+              id="largeLogIn"
+              className="btn-large waves-effect waves-light orange lighten-1"
+              onClick={() => {toggleLoginForm(true);}}>Log in</a>
+          </div>
+          <div className="col s4 offset-s2 hide-on-med-and-up">
+            <a href="#"
+              id="largeLogIn"
+              className="btn-large waves-effect waves-light orange lighten-1"
+              onClick={() => {toggleLoginForm(true);}}>Log in</a>
+          </div>
+        </div>
+      );
+    })();
+  }
+  console.dir(state.loggedIn);
+  
   return (
-    <div id="homeWrapper">
+    <div id="homeWrapper" className="pageWrapper">
       <div className="parallax-container">
         <div className="section valign-wrapper">
           <div className="container">
@@ -328,26 +389,7 @@ const MainForm = (props) => {
             <br />
             <h3 className="header center white-text">It doesn't take much to be a hero.</h3>
             <br />
-            <div className="row center">
-              <div className="col s4 m2 offset-m4 offset-s1">
-                <a href="#"
-                  id="largeSignUp"
-                  className="btn-large waves-effect waves-light orange lighten-1"
-                  onClick={openSignupForm}>Sign up</a>
-              </div>
-              <div className="col m2 hide-on-small-only">
-                <a href="#"
-                  id="largeLogIn"
-                  className="btn-large waves-effect waves-light orange lighten-1"
-                  onClick={() => {toggleLoginForm(true);}}>Log in</a>
-              </div>
-              <div className="col s4 offset-s2 hide-on-med-and-up">
-                <a href="#"
-                  id="largeLogIn"
-                  className="btn-large waves-effect waves-light orange lighten-1"
-                  onClick={() => {toggleLoginForm(true);}}>Log in</a>
-              </div>
-            </div>
+            {centerRow}
             <br />
             <br />
           </div>
@@ -509,7 +551,8 @@ const buildHomePage = (csrf) => {
   // render all the parts
   ReactDOM.render(
     <NavForm />,
-    document.querySelector('#head')
+    document.querySelector('#head'),
+    checkIfLoggedIn,
   );
   ReactDOM.render(
     <MainForm csrf={csrf} />,
@@ -534,12 +577,6 @@ const buildHomePage = (csrf) => {
     dist: 0,
     padding: 100,
     indicators: true,
-  });
-};
-
-const getToken = () => {
-  sendAjax('GET', 'getToken', null, (result) => {
-    buildHomePage(result.csrfToken);
   });
 };
 

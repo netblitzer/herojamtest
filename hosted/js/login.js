@@ -1,21 +1,97 @@
 'use strict';
 
+// function to react with the login/logout system
+var loginResponse = function loginResponse(response) {
+  if (response.loggedin) {
+    state.loggedIn = true;
+
+    toggleLoginForm(false);
+
+    Materialize.toast(response.message, 3000);
+  } else {
+    state.loggedIn = false;
+
+    resetAllTokens();
+  }
+  ReactDOM.render(React.createElement(NavForm, null), document.querySelector('#head'));
+};
+
+// function to react with the login/logout system
+var signupResponse = function signupResponse(response) {
+  if (response.loggedin) {
+    state.loggedIn = true;
+
+    openMainForm();
+
+    Materialize.toast(response.message, 3000);
+  } else {
+    state.loggedIn = false;
+
+    resetAllTokens();
+  }
+};
+
+// function to call during the start of the page to see if teh client is already logged in
+var checkIfLoggedIn = function checkIfLoggedIn() {
+  sendAjax('GET', '/isLoggedIn', null, function (response) {
+    loginResponse(response);
+
+    ReactDOM.render(React.createElement(MainForm, { csrf: state.csrf }), document.querySelector('#rendered'),
+    // callback for the main content
+    function () {
+      $('#homeWrapper').addClass('page-opened');
+    });
+  });
+};
+
+// Handlers for post and get requests with logins
 var handleLogin = function handleLogin(e) {
   e.preventDefault();
+
+  if ($('#loginForm #email').val() === '' || $('#loginForm #pass').val() === '') {
+    handleError('Email or password is missing.');
+    return false;
+  }
+
+  sendAjax('POST', $('#loginForm').attr('action'), $('#loginForm').serialize(), loginResponse);
+
+  return false;
 };
 
 var handleSignup = function handleSignup(e) {
   e.preventDefault();
+
+  if ($('#signupForm #email').val() === '' || $('#signupForm #first').val() === '' || $('#signupForm #last').val() === '' || $('#signupForm #pass').val() === '' || $('#signupForm #pass2').val() === '') {
+    handleError('Required parameters are missing.');
+    return false;
+  }
+
+  if ($('#signupForm #pass').val() !== $('#signupForm #pass2').val()) {
+    handleError('Passwords do not match.');
+    return false;
+  }
+
+  sendAjax('POST', $('#signupForm').attr('action'), $('#signupForm').serialize(), signupResponse);
+
+  return false;
 };
 
+var handleLogout = function handleLogout() {
+  if (state.loggedIn) {
+    sendAjax('GET', '/logout', null, loginResponse);
+  }
+};
+
+// Form clearing functions
 var clearLoginForm = function clearLoginForm(e) {
-  $('#loginForm #user').val('');
+  $('#loginForm #email').val('');
   $('#loginForm #pass').val('');
-  $('#loginForm #pass2').val('');
 };
 
 var clearSignupForm = function clearSignupForm(e) {
-  $('#signupForm #user').val('');
+  $('#signupForm #email').val('');
+  $('#signupForm #first').val('');
+  $('#signupForm #last').val('');
   $('#signupForm #pass').val('');
   $('#signupForm #pass2').val('');
 };
@@ -23,7 +99,7 @@ var clearSignupForm = function clearSignupForm(e) {
 var SignupForm = function SignupForm(props) {
   return React.createElement(
     'div',
-    { id: 'signupWrapper' },
+    { id: 'signupWrapper', className: 'pageWrapper' },
     React.createElement(
       'div',
       { className: 'container hide-on-small-only' },
@@ -40,10 +116,13 @@ var SignupForm = function SignupForm(props) {
               'form',
               {
                 id: 'signupForm',
-                onSubmit: handleSignup },
+                name: 'signupForm',
+                onSubmit: handleSignup,
+                action: '/signup',
+                method: 'POST' },
               React.createElement(
                 'h5',
-                { className: 'grey-text text-darken-2 pushed-down-3' },
+                { className: 'grey-text text-darken-2 pushed-down-2' },
                 'Join Hero',
                 React.createElement(
                   'span',
@@ -58,11 +137,35 @@ var SignupForm = function SignupForm(props) {
                 React.createElement(
                   'div',
                   { className: 'input-field col s12' },
-                  React.createElement('input', { placeholder: '', id: 'user', type: 'text', className: 'validate' }),
+                  React.createElement('input', { id: 'email', type: 'email', name: 'email', className: 'validate' }),
                   React.createElement(
                     'label',
-                    { 'for': 'user' },
-                    'Username'
+                    { 'for': 'email', 'data-error': 'Invalid Email' },
+                    'Email'
+                  )
+                )
+              ),
+              React.createElement(
+                'div',
+                { className: 'row' },
+                React.createElement(
+                  'div',
+                  { className: 'input-field col s6' },
+                  React.createElement('input', { id: 'first', type: 'text', name: 'first', className: 'validate' }),
+                  React.createElement(
+                    'label',
+                    { 'for': 'first' },
+                    'First Name'
+                  )
+                ),
+                React.createElement(
+                  'div',
+                  { className: 'input-field col s6' },
+                  React.createElement('input', { id: 'last', type: 'text', name: 'last', className: 'validate' }),
+                  React.createElement(
+                    'label',
+                    { 'for': 'last' },
+                    'Last Name'
                   )
                 )
               ),
@@ -72,7 +175,7 @@ var SignupForm = function SignupForm(props) {
                 React.createElement(
                   'div',
                   { className: 'input-field col s12' },
-                  React.createElement('input', { id: 'pass', type: 'password', className: 'validate' }),
+                  React.createElement('input', { id: 'pass', type: 'password', name: 'pass', className: 'validate' }),
                   React.createElement(
                     'label',
                     { 'for': 'pass' },
@@ -86,7 +189,7 @@ var SignupForm = function SignupForm(props) {
                 React.createElement(
                   'div',
                   { className: 'input-field col s12' },
-                  React.createElement('input', { id: 'pass2', type: 'password', className: 'validate' }),
+                  React.createElement('input', { id: 'pass2', type: 'password', name: 'pass2', className: 'validate' }),
                   React.createElement(
                     'label',
                     { 'for': 'pass2' },
@@ -94,7 +197,7 @@ var SignupForm = function SignupForm(props) {
                   )
                 )
               ),
-              React.createElement('input', { type: 'hidden', id: '_csrf', value: props.csrf }),
+              React.createElement('input', { type: 'hidden', name: '_csrf', value: props.csrf }),
               React.createElement(
                 'button',
                 { className: 'btn white waves-effect waves-green black-text right', type: 'submit', name: 'action' },
@@ -121,7 +224,8 @@ var SignupForm = function SignupForm(props) {
           )
         )
       )
-    )
+    ),
+    React.createElement('div', { id: 'loginContainer' })
   );
 };
 
@@ -187,18 +291,21 @@ var LoginForm = function LoginForm(props) {
                   'form',
                   { className: 'col s12',
                     id: 'loginForm',
-                    onSubmit: handleLogin },
+                    name: 'loginForm',
+                    onSubmit: handleLogin,
+                    action: '/login',
+                    method: 'POST' },
                   React.createElement(
                     'div',
-                    { className: 'row' },
+                    { className: 'row pushed-down-2' },
                     React.createElement(
                       'div',
                       { className: 'input-field col s12' },
-                      React.createElement('input', { placeholder: '', id: 'user', type: 'text', className: 'validate' }),
+                      React.createElement('input', { id: 'email', type: 'email', name: 'email', className: 'validate' }),
                       React.createElement(
                         'label',
-                        { 'for': 'user' },
-                        'Username'
+                        { 'for': 'email', 'data-error': 'Invalid Email' },
+                        'Email'
                       )
                     )
                   ),
@@ -208,7 +315,7 @@ var LoginForm = function LoginForm(props) {
                     React.createElement(
                       'div',
                       { className: 'input-field col s12' },
-                      React.createElement('input', { id: 'pass', type: 'password', className: 'validate' }),
+                      React.createElement('input', { id: 'pass', type: 'password', name: 'pass', className: 'validate' }),
                       React.createElement(
                         'label',
                         { 'for': 'pass' },
@@ -216,7 +323,7 @@ var LoginForm = function LoginForm(props) {
                       )
                     )
                   ),
-                  React.createElement('input', { type: 'hidden', id: '_csrf', value: props.csrf }),
+                  React.createElement('input', { type: 'hidden', name: '_csrf', value: props.csrf }),
                   React.createElement(
                     'button',
                     { className: 'btn white waves-effect waves-green black-text right', type: 'submit', name: 'action' },

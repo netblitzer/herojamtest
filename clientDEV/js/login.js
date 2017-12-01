@@ -1,57 +1,148 @@
+// function to react with the login/logout system
+const loginResponse = (response) => {
+  if (response.loggedin) {
+    state.loggedIn = true;
+    
+    toggleLoginForm(false);
+    
+    Materialize.toast(response.message, 3000);
+  } else {
+    state.loggedIn = false;
+    
+    resetAllTokens();
+  }
+  ReactDOM.render(
+    <NavForm />,
+    document.querySelector('#head'),
+  );
+};
+
+// function to react with the login/logout system
+const signupResponse = (response) => {
+  if (response.loggedin) {
+    state.loggedIn = true;
+    
+    openMainForm();
+    
+    Materialize.toast(response.message, 3000);
+  } else {
+    state.loggedIn = false;
+    
+    resetAllTokens();
+  }
+};
+
+// function to call during the start of the page to see if teh client is already logged in
+const checkIfLoggedIn = () => {
+  sendAjax('GET', '/isLoggedIn', null, (response) => {
+    loginResponse(response);
+    
+    ReactDOM.render(
+      <MainForm csrf={state.csrf} />,
+      document.querySelector('#rendered'),
+      // callback for the main content
+      () => {
+       $('#homeWrapper').addClass('page-opened');
+      },
+    );
+  });
+};
+
+// Handlers for post and get requests with logins
 const handleLogin = (e) => {
   e.preventDefault();
   
+  if ($('#loginForm #email').val() === '' || $('#loginForm #pass').val() === '') {
+    handleError('Email or password is missing.');
+    return false;
+  }
   
+  sendAjax('POST', $('#loginForm').attr('action'), $('#loginForm').serialize(), loginResponse);
+  
+  return false;
 };
 
 const handleSignup = (e) => {
   e.preventDefault();
   
+  if ($('#signupForm #email').val() === '' || $('#signupForm #first').val() === '' || $('#signupForm #last').val() === '' || $('#signupForm #pass').val() === '' || $('#signupForm #pass2').val() === '') {
+    handleError('Required parameters are missing.');
+    return false;
+  }
   
+  if ($('#signupForm #pass').val() !== $('#signupForm #pass2').val()) {
+    handleError('Passwords do not match.');
+    return false;
+  }
+  
+  sendAjax('POST', $('#signupForm').attr('action'), $('#signupForm').serialize(), signupResponse);
+  
+  return false;
 };
 
+const handleLogout = () => {
+  if (state.loggedIn) {
+    sendAjax('GET', '/logout', null, loginResponse);
+  }
+}
+
+// Form clearing functions
 const clearLoginForm = (e) => {
-  $('#loginForm #user').val('');
+  $('#loginForm #email').val('');
   $('#loginForm #pass').val('');
-  $('#loginForm #pass2').val('');
 };
 
 const clearSignupForm =(e) => {
-  $('#signupForm #user').val('');
+  $('#signupForm #email').val('');
+  $('#signupForm #first').val('');
+  $('#signupForm #last').val('');
   $('#signupForm #pass').val('');
   $('#signupForm #pass2').val('');
 };
 
 const SignupForm = (props) => {
   return (
-    <div id="signupWrapper">
+    <div id="signupWrapper" className="pageWrapper">
       <div className="container hide-on-small-only">
         <div className="row">
           <div className="col m6 offset-m3">
             <div className="col s12">
               <form
                 id="signupForm"
-                onSubmit={handleSignup}>
-                <h5 className="grey-text text-darken-2 pushed-down-3">Join Hero<span className="orange-text text-lighten-1">Jam</span> and become a hero.</h5>
+                name="signupForm"
+                onSubmit={handleSignup}
+                action="/signup"
+                method="POST">
+                <h5 className="grey-text text-darken-2 pushed-down-2">Join Hero<span className="orange-text text-lighten-1">Jam</span> and become a hero.</h5>
                 <div className="row">
                   <div className="input-field col s12">
-                    <input placeholder="" id="user" type="text" className="validate" />
-                    <label for="user">Username</label>
+                    <input id="email" type="email" name="email" className="validate" />
+                    <label for="email" data-error="Invalid Email">Email</label>
+                  </div>
+                </div>
+                <div className="row">
+                  <div className="input-field col s6">
+                    <input id="first" type="text" name="first" className="validate" />
+                    <label for="first">First Name</label>
+                  </div>
+                  <div className="input-field col s6">
+                    <input id="last" type="text" name="last" className="validate" />
+                    <label for="last">Last Name</label>
                   </div>
                 </div>
                 <div className="row">
                   <div className="input-field col s12">
-                    <input id="pass" type="password" className="validate" />
+                    <input id="pass" type="password" name="pass" className="validate" />
                     <label for="pass">Password</label>
                   </div>
                 </div>
                 <div className="row">
                   <div className="input-field col s12">
-                    <input id="pass2" type="password" className="validate" />
+                    <input id="pass2" type="password" name="pass2" className="validate" />
                     <label for="pass2">Repeat Password</label>
                   </div>
                 </div>
-                <input type="hidden" id="_csrf" value={props.csrf}/>
+                <input type="hidden" name="_csrf" value={props.csrf}/>
                 <button className="btn white waves-effect waves-green black-text right" type="submit" name="action">Submit
                   <i className="material-icons right">send</i>
                 </button>
@@ -64,6 +155,10 @@ const SignupForm = (props) => {
             </div>
           </div>
         </div>
+      </div>
+      
+      <div id="loginContainer">
+        
       </div>
     </div>
   );
@@ -98,20 +193,23 @@ const LoginForm = (props) => {
                 <div className="container">
                   <form className="col s12"
                     id="loginForm"
-                    onSubmit={handleLogin}>
-                    <div className="row">
+                    name="loginForm"
+                    onSubmit={handleLogin}
+                    action="/login"
+                    method="POST">
+                    <div className="row pushed-down-2">
                       <div className="input-field col s12">
-                        <input placeholder="" id="user" type="text" className="validate" />
-                        <label for="user">Username</label>
+                        <input id="email" type="email" name="email" className="validate" />
+                        <label for="email" data-error="Invalid Email">Email</label>
                       </div>
                     </div>
                     <div className="row">
                       <div className="input-field col s12">
-                        <input id="pass" type="password" className="validate" />
+                        <input id="pass" type="password" name="pass" className="validate" />
                         <label for="pass">Password</label>
                       </div>
                     </div>
-                    <input type="hidden" id="_csrf" value={props.csrf}/>
+                    <input type="hidden" name="_csrf" value={props.csrf}/>
                     <button className="btn white waves-effect waves-green black-text right" type="submit" name="action">Submit
                       <i className="material-icons right">send</i>
                     </button>

@@ -8,6 +8,12 @@ body {
 main {
   flex: 1 0 auto;
 }
+#head {
+  z-index: 50000;
+}
+#main {
+  z-index: 0;
+}
 
 .heavy {
   font-weight: 500;
@@ -16,12 +22,21 @@ main {
   visibility: hidden;
   display: none !important;
 }
-.space-gap {
-  height: 10px;
-}
 .centered-button {
   left: 50%;
   transform: translateX(-50%);
+}
+.centered {
+  margin-left: auto;
+  margin-right: auto;
+}
+.no-side-padding {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+.no-shadow {
+  -webkit-box-shadow: none;
+  box-shadow: none;
 }
 .pushed-down {
   margin-top: 20px;
@@ -31,6 +46,10 @@ main {
 }
 .pushed-down-3 {
   margin-top: 60px;
+}
+
+.space-gap {
+  height: 10px;
 }
 
 .progress {
@@ -72,7 +91,7 @@ main {
   }
 }
 
-#homeWrapper, #signupWrapper {
+.pageWrapper {
   position: relative;
   left: 100%;
   transition: left 1s, opacity 0.5s;
@@ -156,5 +175,16 @@ main {
   h5 {
     margin: 0;
     line-height: 1.5;
+  }
+}
+
+#profileInfoContainer {
+  padding: 0 30px;
+}
+.profile-content {
+  opacity: 0;
+  transition: opacity 0.5s;
+  &.opened {
+    opacity: 1;
   }
 }

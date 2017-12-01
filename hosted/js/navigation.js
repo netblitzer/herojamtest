@@ -22,7 +22,7 @@ var NavForm = function NavForm(props) {
         null,
         React.createElement(
           'a',
-          { className: state.page == 'Profile' ? "black-text heavy" : "grey-text text-darken-2", href: '#', onClick: openProfileForm },
+          { className: state.page === 'Profile' ? "black-text heavy" : "grey-text text-darken-2", href: '#', onClick: openProfileForm },
           'Profile'
         )
       );
@@ -33,7 +33,7 @@ var NavForm = function NavForm(props) {
         null,
         React.createElement(
           'a',
-          { className: 'grey-text text-darken-2', href: '#' },
+          { className: 'grey-text text-darken-2', href: '#', onClick: handleLogout },
           'Log Out'
         )
       );
@@ -45,7 +45,7 @@ var NavForm = function NavForm(props) {
         null,
         React.createElement(
           'a',
-          { className: state.page == 'Sign Up' ? "black-text heavy" : "grey-text text-darken-2", href: '#', onClick: openSignupForm },
+          { className: state.page === 'Sign Up' ? "black-text heavy" : "grey-text text-darken-2", href: '#', onClick: openSignupForm },
           'Sign Up'
         )
       );
@@ -90,7 +90,7 @@ var NavForm = function NavForm(props) {
           null,
           React.createElement(
             'a',
-            { className: state.page == 'Home' ? "black-text heavy" : "grey-text text-darken-2", href: '#', onClick: openMainForm },
+            { className: state.page === 'Home' ? "black-text heavy" : "grey-text text-darken-2", href: '#', onClick: openMainForm },
             'Home'
           )
         ),
@@ -99,7 +99,7 @@ var NavForm = function NavForm(props) {
           null,
           React.createElement(
             'a',
-            { className: state.page == 'About' ? "black-text heavy" : "grey-text text-darken-2", href: '#', onClick: openAboutForm },
+            { className: state.page === 'About' ? "black-text heavy" : "grey-text text-darken-2", href: '#', onClick: openAboutForm },
             'About'
           )
         ),
@@ -110,7 +110,7 @@ var NavForm = function NavForm(props) {
           null,
           React.createElement(
             'a',
-            { className: state.page == 'Donate' ? "orange-text text-lighten-1 heavy" : "orange-text text-lighten-1", href: '#', onClick: openDonateForm },
+            { className: state.page === 'Donate' ? "orange-text text-lighten-1 heavy" : "orange-text text-lighten-1", href: '#', onClick: openDonateForm },
             'Donate'
           )
         )
