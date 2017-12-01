@@ -149,6 +149,9 @@ const dburl = () => {
   const db = DB[env];
   const auth = (db.username && db.password ? `${db.username}:${db.password}@` : '');
   const port = (db.port ? `:${db.port}` : '');
+  if (env === 'staging' || env === 'production') {
+    return process.env.MONGODB_URI;
+  }
   return `mongodb://${auth}${db.host}${port}/${db.database}`;
 };
 
