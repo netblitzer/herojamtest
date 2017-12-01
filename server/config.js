@@ -40,12 +40,12 @@ const http = {
   // http config vars for staging
   staging: {
     port: process.env.PORT || process.env.NODE_PORT || 3000,
-    baseUrl: 'http://stagingAppName.herokuapp.com',
+    baseUrl: 'http://herojam-test.herokuapp.com',
   },
   // http config vars for production
   production: {
     port: process.env.PORT || process.env.NODE_PORT || 3000,
-    baseUrl: 'http://appName.herokuapp.com',
+    baseUrl: 'http://herojam-test.herokuapp.com',
   },
 };
 
@@ -69,13 +69,13 @@ const DB = {
   // your environment with malformed data)
   staging: {
     host: undefined, // stored in MONGO_LAB process ENV variable for heroku
-    database: undefined,
+    database: 'staging_HeroJam',
   },
   // production database (use a different database for each so you don't pollute
   // your environment with malformed data)
   production: {
     host: undefined, // stored in MONGO_LAB process ENV variable for heroku
-    database: undefined,
+    database: 'production_HeroJam',
   },
 };
 
