@@ -1,6 +1,6 @@
 {
   "name": "HeroJam",
-  "version": "3.0.1",
+  "version": "3.0.9",
   "description": "The HeroJam website.",
   "main": "./server/app.js",
   "scripts": {
@@ -24,6 +24,10 @@
   ],
   "author": "Luke Miller",
   "license": "",
+  "engines": {
+    "node": ">=9.2.0",
+    "npm": ">=5.6.0",
+  },
   "devDependencies": {
     "babel-cli": "^6.18.0",
     "babel-preset-env": "^1.1.8",
