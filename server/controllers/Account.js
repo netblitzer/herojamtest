@@ -41,7 +41,7 @@ const login = (request, response) => {
       errorFull: 'All fields are required to log in.',
     });
   }
-  
+
   // authenticate user
   return Account.AccountModel.authenticate(email, pass, (err, account) => {
     if (err || !account) {
@@ -65,10 +65,10 @@ const login = (request, response) => {
 const passwordChange = (request, response) => {
   const req = request;
   const res = response;
-  
+
   const oldpass = `${req.body.oldpass}`;
   const newpass = `${req.body.newpass}`;
-  
+
   // check for valid params
   if (!oldpass || !newpass) {
     return res.status(400).json({
@@ -114,7 +114,7 @@ const passwordChange = (request, response) => {
 
       savePromise.catch((error) => {
         console.log(error);
-        
+
         // this error should never happen during a password change
         if (error.code === 11000) {
           return res.status(400).json({
@@ -144,7 +144,7 @@ const signup = (request, response) => {
   const last = `${req.body.last}`;
   const pass = `${req.body.pass}`;
   const pass2 = `${req.body.pass2}`;
-  
+
   // check for valid params
   if (!email || !pass || !pass2 || !first || !last) {
     return res.status(400).json({
@@ -229,7 +229,7 @@ const getPublicProfile = (request, response) => {
     });
   }
   email = req.session.account.email;
-  
+
   // search for your own profile
   return Account.AccountModel.findPublicProfileByEmail(email, (err, profile) => {
     if (err || !profile) {

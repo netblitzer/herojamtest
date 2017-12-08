@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 
 mongoose.Promise = global.Promise;
 
-let QuestionModel = {};
+const QuestionModel = {};
 
 const QuestionSchema = new mongoose.Schema({
   question: {
@@ -24,7 +24,7 @@ QuestionSchema.statics.findByQuestion = (question, callback) => {
   const search = {
     question,
   };
-  
+
   return QuestionModel.find(search, callback);
 };
 
@@ -32,8 +32,8 @@ QuestionSchema.statics.findByAnswer = (answer, callback) => {
   const search = {
     answer,
   };
-  
-  return QuestionModel.find(answer, callback);
+
+  return QuestionModel.find(search, callback);
 };
 
 module.exports = {
