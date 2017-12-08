@@ -2,6 +2,7 @@ const models = require('../models');
 
 const Account = models.Account;
 
+// check to see if the user is already logged in
 const isLoggedIn = (req, res) => {
   if (req.session.account) {
     return res.json({
@@ -15,6 +16,7 @@ const isLoggedIn = (req, res) => {
   });
 };
 
+// logout function
 const logout = (req, res) => {
   req.session.destroy();
   res.json({
@@ -23,6 +25,7 @@ const logout = (req, res) => {
   });
 };
 
+// login function
 const login = (request, response) => {
   const req = request;
   const res = response;
@@ -30,6 +33,7 @@ const login = (request, response) => {
   const email = `${req.body.email}`;
   const pass = `${req.body.pass}`;
 
+  // check for valid params
   if (!email || !pass) {
     return res.status(400).json({
       loggedin: false,
@@ -37,7 +41,8 @@ const login = (request, response) => {
       errorFull: 'All fields are required to log in.',
     });
   }
-
+  
+  // authenticate user
   return Account.AccountModel.authenticate(email, pass, (err, account) => {
     if (err || !account) {
       return res.status(400).json({
@@ -56,33 +61,36 @@ const login = (request, response) => {
   });
 };
 
+// password change function
 const passwordChange = (request, response) => {
   const req = request;
   const res = response;
-
+  
   const oldpass = `${req.body.oldpass}`;
   const newpass = `${req.body.newpass}`;
-
+  
+  // check for valid params
   if (!oldpass || !newpass) {
     return res.status(400).json({
-      loggedin: false,
+      loggedin: true,
       error: 'missingParams',
       errorFull: 'All fields are required to change the password.',
     });
   }
-
+  // check if passwords changed
   if (oldpass === newpass) {
     return res.status(400).json({
-      loggedin: false,
+      loggedin: true,
       error: 'noChange',
       errorFull: 'Passwords did not change.',
     });
   }
 
+  // authenticate user
   return Account.AccountModel.authenticate(req.session.account.email, oldpass, (err, acc) => {
     if (err || !acc) {
       return res.status(400).json({
-        loggedin: false,
+        loggedin: true,
         error: 'incorrectUserPass',
         errorFull: 'Incorrect current password.',
       });
@@ -106,17 +114,18 @@ const passwordChange = (request, response) => {
 
       savePromise.catch((error) => {
         console.log(error);
-
+        
+        // this error should never happen during a password change
         if (error.code === 11000) {
           return res.status(400).json({
-            loggedin: false,
+            loggedin: true,
             error: 'userAlreadyExists',
             errorFull: 'The email already exists.',
           });
         }
 
         return res.status(400).json({
-          loggedin: false,
+          loggedin: true,
           error: 'unknownError',
           errorFull: 'An error occurred, please try again.',
         });
@@ -125,6 +134,7 @@ const passwordChange = (request, response) => {
   });
 };
 
+// signup function
 const signup = (request, response) => {
   const req = request;
   const res = response;
@@ -134,7 +144,8 @@ const signup = (request, response) => {
   const last = `${req.body.last}`;
   const pass = `${req.body.pass}`;
   const pass2 = `${req.body.pass2}`;
-
+  
+  // check for valid params
   if (!email || !pass || !pass2 || !first || !last) {
     return res.status(400).json({
       loggedin: false,
@@ -143,6 +154,7 @@ const signup = (request, response) => {
     });
   }
 
+  // check if password params match
   if (pass !== pass2) {
     return res.status(400).json({
       loggedin: false,
@@ -151,6 +163,7 @@ const signup = (request, response) => {
     });
   }
 
+  // create the new account
   return Account.AccountModel.generateHash(pass, (salt, hash) => {
     const accountData = {
       email,
@@ -162,6 +175,7 @@ const signup = (request, response) => {
 
     const newAccount = new Account.AccountModel(accountData);
 
+    // save the account
     const savePromise = newAccount.save();
 
     savePromise.then(() => {
@@ -169,6 +183,7 @@ const signup = (request, response) => {
       return res.json({
         loggedin: true,
         message: 'Account creation successful.',
+        redirect: 'Home',
       });
     });
 
@@ -192,13 +207,16 @@ const signup = (request, response) => {
   });
 };
 
+// get the public profile of a user
 const getPublicProfile = (request, response) => {
   const req = request;
   const res = response;
 
   let email = `${req.body.email}`;
 
+  // check to see if there's an email
   if (req.body.email !== undefined && email) {
+    // search for a profile that was input
     return Account.AccountModel.findPublicProfileByEmail(email, (err, profile) => {
       if (err || !profile) {
         return res.status(404).json({
@@ -211,7 +229,8 @@ const getPublicProfile = (request, response) => {
     });
   }
   email = req.session.account.email;
-
+  
+  // search for your own profile
   return Account.AccountModel.findPublicProfileByEmail(email, (err, profile) => {
     if (err || !profile) {
       return res.status(404).json({

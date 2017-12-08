@@ -162,3 +162,6 @@ main {
   transition: opacity 0.5s; }
   .profile-content.opened {
     opacity: 1; }
+
+.collapsible-thin-padding {
+  padding: 0.5rem; }
