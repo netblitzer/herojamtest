@@ -6,12 +6,12 @@ const Account = models.Account;
 const isLoggedIn = (req, res) => {
   if (req.session.account) {
     return res.json({
-      loggedin: true,
+      success: true,
       message: 'User is logged in.',
     });
   }
   return res.json({
-    loggedin: false,
+    success: false,
     message: 'User is not logged in.',
   });
 };
@@ -20,7 +20,7 @@ const isLoggedIn = (req, res) => {
 const logout = (req, res) => {
   req.session.destroy();
   res.json({
-    loggedin: false,
+    success: true,
     message: 'Log out successful.',
   });
 };
@@ -36,7 +36,7 @@ const login = (request, response) => {
   // check for valid params
   if (!email || !pass) {
     return res.status(400).json({
-      loggedin: false,
+      success: false,
       error: 'missingParams',
       errorFull: 'All fields are required to log in.',
     });
@@ -46,7 +46,7 @@ const login = (request, response) => {
   return Account.AccountModel.authenticate(email, pass, (err, account) => {
     if (err || !account) {
       return res.status(400).json({
-        loggedin: false,
+        success: false,
         error: 'incorrectUserPass',
         errorFull: 'Incorrect email or password.',
       });
@@ -55,7 +55,7 @@ const login = (request, response) => {
     req.session.account = Account.AccountModel.toAPI(account);
 
     return res.json({
-      loggedin: true,
+      success: true,
       message: 'Log in successful.',
     });
   });
@@ -72,7 +72,7 @@ const passwordChange = (request, response) => {
   // check for valid params
   if (!oldpass || !newpass) {
     return res.status(400).json({
-      loggedin: true,
+      success: false,
       error: 'missingParams',
       errorFull: 'All fields are required to change the password.',
     });
@@ -80,7 +80,7 @@ const passwordChange = (request, response) => {
   // check if passwords changed
   if (oldpass === newpass) {
     return res.status(400).json({
-      loggedin: true,
+      success: false,
       error: 'noChange',
       errorFull: 'Passwords did not change.',
     });
@@ -90,7 +90,7 @@ const passwordChange = (request, response) => {
   return Account.AccountModel.authenticate(req.session.account.email, oldpass, (err, acc) => {
     if (err || !acc) {
       return res.status(400).json({
-        loggedin: true,
+        success: false,
         error: 'incorrectUserPass',
         errorFull: 'Incorrect current password.',
       });
@@ -107,6 +107,7 @@ const passwordChange = (request, response) => {
       savePromise.then(() => {
         req.session.account = Account.AccountModel.toAPI(account);
         return res.json({
+          success: true,
           loggedin: true,
           message: 'Password changed successfully.',
         });
@@ -118,14 +119,14 @@ const passwordChange = (request, response) => {
         // this error should never happen during a password change
         if (error.code === 11000) {
           return res.status(400).json({
-            loggedin: true,
+            success: false,
             error: 'userAlreadyExists',
             errorFull: 'The email already exists.',
           });
         }
 
         return res.status(400).json({
-          loggedin: true,
+          success: false,
           error: 'unknownError',
           errorFull: 'An error occurred, please try again.',
         });
@@ -148,7 +149,7 @@ const signup = (request, response) => {
   // check for valid params
   if (!email || !pass || !pass2 || !first || !last) {
     return res.status(400).json({
-      loggedin: false,
+      success: false,
       error: 'missingParams',
       errorFull: 'All fields are required to log in.',
     });
@@ -157,7 +158,7 @@ const signup = (request, response) => {
   // check if password params match
   if (pass !== pass2) {
     return res.status(400).json({
-      loggedin: false,
+      success: false,
       error: 'passwordsNotMatching',
       errorFull: 'The passwords do not match.',
     });
@@ -181,7 +182,7 @@ const signup = (request, response) => {
     savePromise.then(() => {
       req.session.account = Account.AccountModel.toAPI(newAccount);
       return res.json({
-        loggedin: true,
+        success: true,
         message: 'Account creation successful.',
         redirect: 'Home',
       });
@@ -192,14 +193,14 @@ const signup = (request, response) => {
 
       if (err.code === 11000) {
         return res.status(400).json({
-          loggedin: false,
+          success: false,
           error: 'userAlreadyExists',
           errorFull: 'The email already exists.',
         });
       }
 
       return res.status(400).json({
-        loggedin: false,
+        success: false,
         error: 'unknownError',
         errorFull: 'An error occurred, please try again.',
       });
@@ -212,7 +213,20 @@ const getPublicProfile = (request, response) => {
   const req = request;
   const res = response;
 
-  let email = `${req.body.email}`;
+  let email;
+
+  if (req.body.email === undefined) {
+    if (req.session.account === undefined) {
+      return res.status(404).json({
+        success: false,
+        error: 'unknownUser',
+        errorFull: 'No profile specified.',
+      });
+    }
+    email = req.session.account.email;
+  } else {
+    email = `${req.body.email}`;
+  }
 
   // check to see if there's an email
   if (req.body.email !== undefined && email) {
@@ -220,6 +234,7 @@ const getPublicProfile = (request, response) => {
     return Account.AccountModel.findPublicProfileByEmail(email, (err, profile) => {
       if (err || !profile) {
         return res.status(404).json({
+          success: false,
           error: 'unknownUser',
           errorFull: 'Could not find the profile of the user with that email.',
         });
@@ -228,18 +243,21 @@ const getPublicProfile = (request, response) => {
       return res.json(profile);
     });
   }
-  email = req.session.account.email;
 
   // search for your own profile
   return Account.AccountModel.findPublicProfileByEmail(email, (err, profile) => {
     if (err || !profile) {
       return res.status(404).json({
-        error: 'unknownUser',
+        success: false,
+        error: 'userNotFound',
         errorFull: 'Could not find the profile of your account.',
       });
     }
 
-    return res.json(profile);
+    return res.json({
+      success: true,
+      profile,
+    });
   });
 };
 

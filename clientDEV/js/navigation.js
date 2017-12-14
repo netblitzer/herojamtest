@@ -1,9 +1,73 @@
 // Object for storing the navigation state
 const state = {
-  page: 'Home',
+  page: undefined,
   crumb: [ ],
   loggedIn: false,
   csrf: undefined,
+};
+
+// navigation state changes
+const changePage = (e) => {
+  // figure out what the future page is
+  let title;
+  if (e.target) {
+    title = e.target.textContent;
+  } else {
+    title = e;
+  }
+  
+  // see which page we're moving to
+  switch (title) {
+    default:
+    case 'Home':
+      history.pushState({page: title}, title, 'home');
+      openMainForm();
+      break;
+    case 'About':
+      history.pushState({page: title}, title, 'about');
+      openAboutForm();
+      break;
+    case 'Sign Up':
+      history.pushState({page: title}, title, 'signup');
+      openSignupForm();
+      break;
+    case 'Donate':
+      history.pushState({page: title}, title, 'donate');
+      openDonateForm();
+      break;
+    case 'Profile':
+      history.pushState({page: title}, title, 'profile');
+      openProfileForm();
+      break;
+  }
+};
+
+// backwards and forwards for state changes in the browser
+window.onpopstate = (e) => {
+  // check if we're on the first page we entered through
+  if (e.state) {
+    switch (e.state.page) {
+      default:
+      case 'Home':
+        openMainForm();
+        break;
+      case 'About':
+        openAboutForm();
+        break;
+      case 'Sign Up':
+        openSignupForm();
+        break;
+      case 'Donate':
+        openDonateForm();
+        break;
+      case 'Profile':
+        openProfileForm();
+        break;
+    }
+  } else {
+    // if we're on the first page loaded, just build the basic inner content again
+    buildInnerContent();
+  }
 };
 
 const NavForm = (props) => {
@@ -16,7 +80,7 @@ const NavForm = (props) => {
   if (state.loggedIn) {
     B3 = (() => {
       return (
-        <li><a className={state.page==='Profile' ? "black-text heavy" : "grey-text text-darken-2" } href="#" onClick={openProfileForm}>Profile</a></li>
+        <li><a className={state.page==='Profile' ? "black-text heavy" : "grey-text text-darken-2" } onClick={changePage}>Profile</a></li>
       );
     })();
     B4 = (() => {
@@ -27,7 +91,7 @@ const NavForm = (props) => {
   } else {
     B3 = (() => {
       return (
-        <li><a className={state.page==='Sign Up' ? "black-text heavy" : "grey-text text-darken-2" } href="#" onClick={openSignupForm}>Sign Up</a></li>
+        <li><a className={state.page==='Sign Up' ? "black-text heavy" : "grey-text text-darken-2" } onClick={changePage}>Sign Up</a></li>
       );
     })();
     B4 = (() => {
@@ -41,13 +105,13 @@ const NavForm = (props) => {
   return (
     <nav className="white">
       <div className="nav-wrapper container">
-        <a href="#" className="brand-logo grey-text text-darken-4">Hero<span className="orange-text text-lighten-1">Jam</span></a>
+        <a className="brand-logo grey-text text-darken-4" onClick={() => {changePage('Home')}}>Hero<span className="orange-text text-lighten-1">Jam</span></a>
         <ul id="nav-mobile" className="right hide-on-med-and-down">
-          <li><a className={state.page==='Home' ? "black-text heavy" : "grey-text text-darken-2" } href="#" onClick={openMainForm}>Home</a></li>
-          <li><a className={state.page==='About' ? "black-text heavy" : "grey-text text-darken-2" } href="#" onClick={openAboutForm}>About</a></li>
+          <li><a className={state.page==='Home' ? "black-text heavy" : "grey-text text-darken-2" } onClick={changePage}>Home</a></li>
+          <li><a className={state.page==='About' ? "black-text heavy" : "grey-text text-darken-2" } onClick={changePage}>About</a></li>
           {B3}
           {B4}
-          <li><a className={state.page==='Donate' ? "orange-text text-lighten-1 heavy" : "orange-text text-lighten-1" } href="#" onClick={openDonateForm}>Donate</a></li>
+          <li><a className={state.page==='Donate' ? "orange-text text-lighten-1 heavy" : "orange-text text-lighten-1" } onClick={changePage}>Donate</a></li>
         </ul>
       </div>
       <div id="navProgress">

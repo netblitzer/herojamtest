@@ -1,15 +1,28 @@
-// function to react with the login/logout system
+// response to login
 const loginResponse = (response) => {
-  if (response.loggedin) {
+  if (response.success) {
     state.loggedIn = true;
     
     toggleLoginForm(false);
+    clearLoginForm();
     
     Materialize.toast(response.message, 3000);
+    
+    if (state.page === 'Home') {
+      ReactDOM.render(
+        <MainForm csrf={state.csrf} />,
+        document.querySelector('#rendered'),
+        // callback for the main content
+        () => {
+         $('#homeWrapper').addClass('page-opened');
+        },
+      );
+    }
   } else {
     state.loggedIn = false;
     
     resetAllTokens();
+    Materialize.toast(response.message, 3000);
   }
   ReactDOM.render(
     <NavForm />,
@@ -17,10 +30,11 @@ const loginResponse = (response) => {
   );
 };
 
-// function to react with the login/logout system
+// response to signup
 const signupResponse = (response) => {
-  if (response.loggedin) {
+  if (response.success) {
     state.loggedIn = true;
+    clearSignupForm();
     
     openMainForm();
     
@@ -29,26 +43,29 @@ const signupResponse = (response) => {
     state.loggedIn = false;
     
     resetAllTokens();
+    Materialize.toast(response.errorFull, 3000);
   }
 };
 
-// function to call during the start of the page to see if teh client is already logged in
+// function to call during the start of the page to see if the client is already logged in
 const checkIfLoggedIn = () => {
   sendAjax('GET', '/isLoggedIn', null, (response) => {
     loginResponse(response);
     
-    ReactDOM.render(
-      <MainForm csrf={state.csrf} />,
-      document.querySelector('#rendered'),
-      // callback for the main content
-      () => {
-       $('#homeWrapper').addClass('page-opened');
-      },
-    );
+    if (state.page === 'Home') {
+      ReactDOM.render(
+        <MainForm csrf={state.csrf} />,
+        document.querySelector('#rendered'),
+        // callback for the main content
+        () => {
+         $('#homeWrapper').addClass('page-opened');
+        },
+      );
+    }
   });
 };
 
-// Handlers for post and get requests with logins
+// Handlers for post requests for login and signup
 const handleLogin = (e) => {
   e.preventDefault();
   
@@ -61,7 +78,6 @@ const handleLogin = (e) => {
   
   return false;
 };
-
 const handleSignup = (e) => {
   e.preventDefault();
   
@@ -80,11 +96,43 @@ const handleSignup = (e) => {
   return false;
 };
 
+// logout functions
 const handleLogout = () => {
   if (state.loggedIn) {
-    sendAjax('GET', '/logout', null, loginResponse);
+    sendAjax('GET', '/logout', null, logoutResponse);
   }
-}
+  
+  clearLoginForm();
+  clearSignupForm();
+};
+const logoutResponse = (response) => {
+  if (response.success) {
+    state.loggedIn = false;
+    
+    console.dir(state);
+    
+    resetAllTokens();
+    Materialize.toast(response.message, 3000);
+    
+    ReactDOM.render(
+      <NavForm />,
+      document.querySelector('#head'),
+    );
+    
+    if (state.page === 'Home') {
+      ReactDOM.render(
+        <MainForm csrf={state.csrf} />,
+        document.querySelector('#rendered'),
+        // callback for the main content
+        () => {
+         $('#homeWrapper').addClass('page-opened');
+        },
+      );
+    } else if (state.page === 'Profile') {
+      changePage('Home');
+    }
+  } 
+};
 
 // Form clearing functions
 const clearLoginForm = (e) => {
@@ -111,7 +159,7 @@ const SignupForm = (props) => {
                 id="signupForm"
                 name="signupForm"
                 onSubmit={handleSignup}
-                action="/signup"
+                action="/signupSend"
                 method="POST">
                 <h5 className="grey-text text-darken-2 pushed-down-2">Join Hero<span className="orange-text text-lighten-1">Jam</span> and become a hero.</h5>
                 <div className="row">
@@ -195,7 +243,7 @@ const LoginForm = (props) => {
                     id="loginForm"
                     name="loginForm"
                     onSubmit={handleLogin}
-                    action="/login"
+                    action="/loginSend"
                     method="POST">
                     <div className="row pushed-down-2">
                       <div className="input-field col s12">

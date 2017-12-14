@@ -1,8 +1,32 @@
 'use strict';
 
 var openSignupForm = function openSignupForm() {
-  // check if we can switch to sign up
-  if (state.page !== 'Sign Up') {
+  // if the user is logged on, go back to the main page
+  // can't create a new account if you're already logged in
+  if (state.loggedIn) {
+    history.replaceState({ page: 'Home' }, 'Home', 'home');
+    return openMainForm();
+  }
+
+  // create the signup form
+  var createSignup = function createSignup(prevPage, skip) {
+    ReactDOM.render(React.createElement(SignupForm, { csrf: state.csrf }), document.querySelector('#rendering'), slidePages(prevPage, initializeSignup, '#signupWrapper', skip));
+  };
+
+  // initializer callback
+  var initializeSignup = function initializeSignup() {
+    ReactDOM.render(React.createElement(LoginForm, { csrf: state.csrf }), document.querySelector('#loginContainer'));
+  };
+
+  // if the page is undefined, it means we're starting out on this page
+  // and nothing else has been rendered yet.
+  // We're going to skip all the 'loading' if this is the case
+  if (state.page === undefined) {
+    // change page
+    state.page = 'Sign up';
+
+    createSignup(null, true);
+  } else if (state.page !== 'Sign Up') {
     // push crumb
     state.crumb.push(state.page);
 
@@ -25,51 +49,42 @@ var openSignupForm = function openSignupForm() {
     // change page
     state.page = 'Sign Up';
 
-    // create the progress bar
-    var createProgress = function createProgress() {
-      ReactDOM.render(React.createElement(ProgressForm, null), document.querySelector('#navProgress'), createSignup);
-      document.querySelector('#navProgress .progress').classList += ' shown';
-    };
-
-    // create the signup form
-    var createSignup = function createSignup() {
-      ReactDOM.render(React.createElement(SignupForm, { csrf: state.csrf }), document.querySelector('#rendering'), slidePages);
-    };
-
-    // start sliding out the previous page
-    var slidePages = function slidePages() {
-      prevPage.removeClass('page-opened').addClass('page-closed');
-      setTimeout(function () {
-        swapRendered();
-      }, 1000);
-    };
-
-    // swap the new page into the rendered scene and slide it in
-    var swapRendered = function swapRendered() {
-      var curRendered = $('#rendered');
-      var curRendering = $('#rendering');
-
-      // Swap the content between the two divs without rerendering it
-      curRendered.addClass('hidden').attr('id', 'rendering');
-      curRendering.removeClass('hidden').attr('id', 'rendered');
-
-      // clear the old content
-      document.querySelector('#rendering').innerHTML = '';
-      $('#signupWrapper').addClass('page-opened');
-      $('#navProgress .progress').removeClass('shown');
-
-      ReactDOM.render(React.createElement(NavForm, null), document.querySelector('#head'));
-      ReactDOM.render(React.createElement(LoginForm, { csrf: state.csrf }), document.querySelector('#loginContainer'));
-    };
-
     // start the chain
-    createProgress();
+    createProgress(function () {
+      createSignup(prevPage, false);
+    });
   }
 };
 
 var openMainForm = function openMainForm() {
-  // check if we can switch to sign up
-  if (state.page !== 'Home') {
+
+  // create the main form
+  var createMain = function createMain(prevPage, skip) {
+    ReactDOM.render(React.createElement(MainForm, { csrf: state.csrf }), document.querySelector('#rendering'), slidePages(prevPage, initializeMain, '#homeWrapper', skip));
+  };
+
+  // initializer callback
+  var initializeMain = function initializeMain() {
+    ReactDOM.render(React.createElement(LoginForm, { csrf: state.csrf }), document.querySelector('#loginContainer'));
+
+    // initialize Materialize components
+    $('.parallax').parallax();
+    $('.carousel').carousel({
+      dist: 0,
+      padding: 100,
+      indicators: true
+    });
+  };
+
+  // if the page is undefined, it means we're starting out on this page
+  // and nothing else has been rendered yet.
+  // We're going to skip all the 'loading' if this is the case
+  if (state.page === undefined) {
+    // change page
+    state.page = 'Home';
+
+    createMain(null, true);
+  } else if (state.page !== 'Home') {
     // push crumb
     state.crumb.push(state.page);
 
@@ -92,59 +107,31 @@ var openMainForm = function openMainForm() {
     // change page
     state.page = 'Home';
 
-    // create the progress bar
-    var createProgress = function createProgress() {
-      ReactDOM.render(React.createElement(ProgressForm, null), document.querySelector('#navProgress'), createSignup);
-      document.querySelector('#navProgress .progress').classList += ' shown';
-    };
-
-    // create the main form
-    var createSignup = function createSignup() {
-      ReactDOM.render(React.createElement(MainForm, { csrf: state.csrf }), document.querySelector('#rendering'), slidePages);
-    };
-
-    // start sliding out the previous page
-    var slidePages = function slidePages() {
-      prevPage.removeClass('page-opened').addClass('page-closed');
-      setTimeout(function () {
-        swapRendered();
-      }, 1000);
-    };
-
-    // swap the new page into the rendered scene and slide it in
-    var swapRendered = function swapRendered() {
-      var curRendered = $('#rendered');
-      var curRendering = $('#rendering');
-
-      // Swap the content between the two divs without rerendering it
-      curRendered.addClass('hidden').attr('id', 'rendering');
-      curRendering.removeClass('hidden').attr('id', 'rendered');
-
-      // clear the old content
-      document.querySelector('#rendering').innerHTML = '';
-      $('#homeWrapper').addClass('page-opened');
-      $('#navProgress .progress').removeClass('shown');
-
-      ReactDOM.render(React.createElement(NavForm, null), document.querySelector('#head'));
-      ReactDOM.render(React.createElement(LoginForm, { csrf: state.csrf }), document.querySelector('#loginContainer'));
-
-      // initialize Materialize components
-      $('.parallax').parallax();
-      $('.carousel').carousel({
-        dist: 0,
-        padding: 100,
-        indicators: true
-      });
-    };
-
     // start the chain
-    createProgress();
+    createProgress(function () {
+      createMain(prevPage, false);
+    });
   }
 };
 
 var openDonateForm = function openDonateForm() {
-  // check if we can switch to sign up
-  if (state.page !== 'Donate') {
+  // create the donate form
+  var createDonate = function createDonate(prevPage, skip) {
+    ReactDOM.render(React.createElement(DonateForm, { csrf: state.csrf }), document.querySelector('#rendering'), slidePages(prevPage, initializeDonate, '#donateWrapper', skip));
+  };
+
+  // intializer callback
+  var initializeDonate = function initializeDonate() {};
+
+  // if the page is undefined, it means we're starting out on this page
+  // and nothing else has been rendered yet.
+  // We're going to skip all the 'loading' if this is the case
+  if (state.page === undefined) {
+    // change page
+    state.page = 'Donate';
+
+    createDonate(null, true);
+  } else if (state.page !== 'Donate') {
     // push crumb
     state.crumb.push(state.page);
 
@@ -167,44 +154,10 @@ var openDonateForm = function openDonateForm() {
     // change page
     state.page = 'Donate';
 
-    // create the progress bar
-    var createProgress = function createProgress() {
-      ReactDOM.render(React.createElement(ProgressForm, null), document.querySelector('#navProgress'), createSignup);
-      document.querySelector('#navProgress .progress').classList += ' shown';
-    };
-
-    // create the donate form
-    var createSignup = function createSignup() {
-      ReactDOM.render(React.createElement(DonateForm, { csrf: state.csrf }), document.querySelector('#rendering'), slidePages);
-    };
-
-    // start sliding out the previous page
-    var slidePages = function slidePages() {
-      prevPage.removeClass('page-opened').addClass('page-closed');
-      setTimeout(function () {
-        swapRendered();
-      }, 1000);
-    };
-
-    // swap the new page into the rendered scene and slide it in
-    var swapRendered = function swapRendered() {
-      var curRendered = $('#rendered');
-      var curRendering = $('#rendering');
-
-      // Swap the content between the two divs without rerendering it
-      curRendered.addClass('hidden').attr('id', 'rendering');
-      curRendering.removeClass('hidden').attr('id', 'rendered');
-
-      // clear the old content
-      document.querySelector('#rendering').innerHTML = '';
-      $('#donateWrapper').addClass('page-opened');
-      $('#navProgress .progress').removeClass('shown');
-
-      ReactDOM.render(React.createElement(NavForm, null), document.querySelector('#head'));
-    };
-
     // start the chain
-    createProgress();
+    createProgress(function () {
+      createDonate(prevPage, false);
+    });
   }
 };
 
@@ -212,6 +165,7 @@ var toggleLoginForm = function toggleLoginForm(state) {
   $('.account-frame').toggleClass('account-opened', state);
 };
 
+// loading bar at the top of the screen
 var ProgressForm = function ProgressForm(props) {
   return React.createElement(
     'div',
@@ -222,12 +176,8 @@ var ProgressForm = function ProgressForm(props) {
 
 var MainForm = function MainForm(props) {
 
-  console.dir(state);
-
   var centerRow = void 0;
   if (state.loggedIn) {
-
-    console.dir(state);
     centerRow = function () {
       return React.createElement(
         'div',
@@ -238,7 +188,9 @@ var MainForm = function MainForm(props) {
           React.createElement(
             'a',
             { className: 'btn-large waves-effect waves-light orange lighten-1',
-              onClick: function onClick() {} },
+              onClick: function onClick() {
+                changePage('Donate');
+              } },
             'Donate'
           )
         )
@@ -254,10 +206,11 @@ var MainForm = function MainForm(props) {
           { className: 'col s4 m2 offset-m4 offset-s1' },
           React.createElement(
             'a',
-            { href: '#',
-              id: 'largeSignUp',
+            { id: 'largeSignUp',
               className: 'btn-large waves-effect waves-light orange lighten-1',
-              onClick: openSignupForm },
+              onClick: function onClick() {
+                changePage('Sign Up');
+              } },
             'Sign up'
           )
         ),
@@ -266,8 +219,7 @@ var MainForm = function MainForm(props) {
           { className: 'col m2 hide-on-small-only' },
           React.createElement(
             'a',
-            { href: '#',
-              id: 'largeLogIn',
+            { id: 'largeLogIn',
               className: 'btn-large waves-effect waves-light orange lighten-1',
               onClick: function onClick() {
                 toggleLoginForm(true);
@@ -280,8 +232,7 @@ var MainForm = function MainForm(props) {
           { className: 'col s4 offset-s2 hide-on-med-and-up' },
           React.createElement(
             'a',
-            { href: '#',
-              id: 'largeLogIn',
+            { id: 'largeLogIn',
               className: 'btn-large waves-effect waves-light orange lighten-1',
               onClick: function onClick() {
                 toggleLoginForm(true);
@@ -292,7 +243,6 @@ var MainForm = function MainForm(props) {
       );
     }();
   }
-  console.dir(state.loggedIn);
 
   return React.createElement(
     'div',
@@ -352,7 +302,9 @@ var MainForm = function MainForm(props) {
               ),
               React.createElement(
                 'a',
-                { href: '#', className: 'waves-effect waves-light btn-flat centered-button orange-text text-lighten-1' },
+                { onClick: function onClick() {
+                    changePage('Donate');
+                  }, className: 'waves-effect waves-light btn-flat centered-button orange-text text-lighten-1' },
                 'Donate'
               )
             )
@@ -369,7 +321,9 @@ var MainForm = function MainForm(props) {
                 'What is ',
                 React.createElement(
                   'a',
-                  { className: 'grey-text text-darken-3', href: '#' },
+                  { className: 'grey-text text-darken-3', onClick: function onClick() {
+                      changePage('Home');
+                    } },
                   'Hero',
                   React.createElement(
                     'span',
@@ -386,8 +340,10 @@ var MainForm = function MainForm(props) {
               ),
               React.createElement(
                 'a',
-                { href: '#', className: 'waves-effect waves-light btn-flat centered-button orange-text text-lighten-1' },
-                'Find out More'
+                { onClick: function onClick() {
+                    changePage('About');
+                  }, className: 'waves-effect waves-light btn-flat centered-button orange-text text-lighten-1' },
+                'Find Out More'
               )
             )
           ),
@@ -407,7 +363,9 @@ var MainForm = function MainForm(props) {
                 { className: 'light' },
                 React.createElement(
                   'a',
-                  { className: 'grey-text text-darken-3', href: '#' },
+                  { className: 'grey-text text-darken-3', onClick: function onClick() {
+                      changePage('Home');
+                    } },
                   'Hero',
                   React.createElement(
                     'span',
@@ -740,30 +698,3 @@ var FooterForm = function FooterForm(props) {
     )
   );
 };
-
-// initial function to create the home page
-var buildHomePage = function buildHomePage(csrf) {
-  state.csrf = csrf;
-
-  // render all the parts
-  ReactDOM.render(React.createElement(NavForm, null), document.querySelector('#head'), checkIfLoggedIn);
-  ReactDOM.render(React.createElement(MainForm, { csrf: csrf }), document.querySelector('#rendered'),
-  // callback for the main content
-  function () {
-    $('#homeWrapper').addClass('page-opened');
-  });
-  ReactDOM.render(React.createElement(LoginForm, { csrf: csrf }), document.querySelector('#loginContainer'));
-  ReactDOM.render(React.createElement(FooterForm, null), document.querySelector('#foot'));
-
-  // initialize Materialize components
-  $('.parallax').parallax();
-  $('.carousel').carousel({
-    dist: 0,
-    padding: 100,
-    indicators: true
-  });
-};
-
-$(document).ready(function () {
-  getToken();
-});

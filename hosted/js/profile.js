@@ -1,8 +1,51 @@
 'use strict';
 
 var openProfileForm = function openProfileForm() {
-  // check if we can switch to sign up
-  if (state.page !== 'Profile') {
+  // if the user isn't logged on, go back to the main page
+  if (!state.loggedIn) {
+    history.replaceState({ page: 'Home' }, 'Home', 'home');
+    return openMainForm();
+  }
+
+  // * Basic Page creation functions * //
+  // create the profile form
+  var createProfile = function createProfile(res, prevPage, skip) {
+    ReactDOM.render(React.createElement(PublicProfileForm, {
+      csrf: state.csrf,
+      first: res.firstName,
+      last: res.lastName,
+      email: res.email,
+      school: res.school }), document.querySelector('#rendering'), slidePages(prevPage, initializeProfile, '#profileWrapper', skip));
+  };
+
+  // create the progress bar
+  var createProfileProgress = function createProfileProgress(prevPage, skip) {
+    ReactDOM.render(React.createElement(ProgressForm, null), document.querySelector('#navProgress'), getUserProfile(prevPage, skip));
+    document.querySelector('#navProgress .progress').classList += ' shown';
+  };
+
+  var getUserProfile = function getUserProfile(prevPage, skip) {
+    sendAjax('GET', '/profilePublic', null, function (response) {
+      createProfile(response, prevPage, skip);
+    });
+  };
+
+  var handleProfile = function handleProfile(response, prevPage, skip) {
+    createProfile(response, prevPage, skip);
+  };
+
+  // initializer callback
+  var initializeProfile = function initializeProfile() {};
+
+  // if the page is undefined, it means we're starting out on this page
+  // and nothing else has been rendered yet.
+  // We're going to skip all the 'loading' if this is the case
+  if (state.page === undefined) {
+    // change page
+    state.page = 'Profile';
+
+    createProfileProgress(null, true);
+  } else if (state.page !== 'Profile') {
     // push crumb
     state.crumb.push(state.page);
 
@@ -25,58 +68,8 @@ var openProfileForm = function openProfileForm() {
     // change page
     state.page = 'Profile';
 
-    // create the progress bar
-    var createProgress = function createProgress() {
-      ReactDOM.render(React.createElement(ProgressForm, null), document.querySelector('#navProgress'), getUserProfile);
-      document.querySelector('#navProgress .progress').classList += ' shown';
-    };
-
-    var getUserProfile = function getUserProfile() {
-      sendAjax('GET', '/profilePublic', null, handleProfile);
-    };
-
-    var handleProfile = function handleProfile(response) {
-      createPage(response);
-    };
-
-    // create the about form
-    var createPage = function createPage(res) {
-      ReactDOM.render(React.createElement(PublicProfileForm, {
-        csrf: state.csrf,
-        first: res.firstName,
-        last: res.lastName,
-        email: res.email,
-        school: res.school }), document.querySelector('#rendering'), slidePages);
-    };
-
-    // start sliding out the previous page
-    var slidePages = function slidePages() {
-      prevPage.removeClass('page-opened').addClass('page-closed');
-      setTimeout(function () {
-        swapRendered();
-      }, 1000);
-    };
-
-    // swap the new page into the rendered scene and slide it in
-    var swapRendered = function swapRendered() {
-      var curRendered = $('#rendered');
-      var curRendering = $('#rendering');
-
-      // Swap the content between the two divs without rerendering it
-      curRendered.addClass('hidden').attr('id', 'rendering');
-      curRendering.removeClass('hidden').attr('id', 'rendered');
-
-      // clear the old content
-      document.querySelector('#rendering').innerHTML = '';
-      $('#profileWrapper').addClass('page-opened');
-      $('#navProgress .progress').removeClass('shown');
-      $('.profile-content').addClass('opened');
-
-      ReactDOM.render(React.createElement(NavForm, null), document.querySelector('#head'));
-    };
-
     // start the chain
-    createProgress();
+    createProfileProgress(prevPage, false);
   }
 };
 

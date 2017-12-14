@@ -1,25 +1,36 @@
 'use strict';
 
-// function to react with the login/logout system
+// response to login
 var loginResponse = function loginResponse(response) {
-  if (response.loggedin) {
+  if (response.success) {
     state.loggedIn = true;
 
     toggleLoginForm(false);
+    clearLoginForm();
 
     Materialize.toast(response.message, 3000);
+
+    if (state.page === 'Home') {
+      ReactDOM.render(React.createElement(MainForm, { csrf: state.csrf }), document.querySelector('#rendered'),
+      // callback for the main content
+      function () {
+        $('#homeWrapper').addClass('page-opened');
+      });
+    }
   } else {
     state.loggedIn = false;
 
     resetAllTokens();
+    Materialize.toast(response.message, 3000);
   }
   ReactDOM.render(React.createElement(NavForm, null), document.querySelector('#head'));
 };
 
-// function to react with the login/logout system
+// response to signup
 var signupResponse = function signupResponse(response) {
-  if (response.loggedin) {
+  if (response.success) {
     state.loggedIn = true;
+    clearSignupForm();
 
     openMainForm();
 
@@ -28,23 +39,26 @@ var signupResponse = function signupResponse(response) {
     state.loggedIn = false;
 
     resetAllTokens();
+    Materialize.toast(response.errorFull, 3000);
   }
 };
 
-// function to call during the start of the page to see if teh client is already logged in
+// function to call during the start of the page to see if the client is already logged in
 var checkIfLoggedIn = function checkIfLoggedIn() {
   sendAjax('GET', '/isLoggedIn', null, function (response) {
     loginResponse(response);
 
-    ReactDOM.render(React.createElement(MainForm, { csrf: state.csrf }), document.querySelector('#rendered'),
-    // callback for the main content
-    function () {
-      $('#homeWrapper').addClass('page-opened');
-    });
+    if (state.page === 'Home') {
+      ReactDOM.render(React.createElement(MainForm, { csrf: state.csrf }), document.querySelector('#rendered'),
+      // callback for the main content
+      function () {
+        $('#homeWrapper').addClass('page-opened');
+      });
+    }
   });
 };
 
-// Handlers for post and get requests with logins
+// Handlers for post requests for login and signup
 var handleLogin = function handleLogin(e) {
   e.preventDefault();
 
@@ -57,7 +71,6 @@ var handleLogin = function handleLogin(e) {
 
   return false;
 };
-
 var handleSignup = function handleSignup(e) {
   e.preventDefault();
 
@@ -76,9 +89,35 @@ var handleSignup = function handleSignup(e) {
   return false;
 };
 
+// logout functions
 var handleLogout = function handleLogout() {
   if (state.loggedIn) {
-    sendAjax('GET', '/logout', null, loginResponse);
+    sendAjax('GET', '/logout', null, logoutResponse);
+  }
+
+  clearLoginForm();
+  clearSignupForm();
+};
+var logoutResponse = function logoutResponse(response) {
+  if (response.success) {
+    state.loggedIn = false;
+
+    console.dir(state);
+
+    resetAllTokens();
+    Materialize.toast(response.message, 3000);
+
+    ReactDOM.render(React.createElement(NavForm, null), document.querySelector('#head'));
+
+    if (state.page === 'Home') {
+      ReactDOM.render(React.createElement(MainForm, { csrf: state.csrf }), document.querySelector('#rendered'),
+      // callback for the main content
+      function () {
+        $('#homeWrapper').addClass('page-opened');
+      });
+    } else if (state.page === 'Profile') {
+      changePage('Home');
+    }
   }
 };
 
@@ -118,7 +157,7 @@ var SignupForm = function SignupForm(props) {
                 id: 'signupForm',
                 name: 'signupForm',
                 onSubmit: handleSignup,
-                action: '/signup',
+                action: '/signupSend',
                 method: 'POST' },
               React.createElement(
                 'h5',
@@ -293,7 +332,7 @@ var LoginForm = function LoginForm(props) {
                     id: 'loginForm',
                     name: 'loginForm',
                     onSubmit: handleLogin,
-                    action: '/login',
+                    action: '/loginSend',
                     method: 'POST' },
                   React.createElement(
                     'div',

@@ -49,6 +49,9 @@ main {
 .space-gap {
   height: 10px; }
 
+.brand-logo, a {
+  cursor: pointer; }
+
 .progress {
   margin: 0;
   opacity: 0;
@@ -165,3 +168,9 @@ main {
 
 .collapsible-thin-padding {
   padding: 0.5rem; }
+
+.autocomplete-content {
+  position: absolute; }
+
+.search-wrapper i {
+  top: 10px; }

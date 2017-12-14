@@ -14,18 +14,19 @@ const AccountSchema = new mongoose.Schema({
     required: true,
     trim: true,
     unique: true,
+    match: /^([0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,9})$/m,
   },
   firstName: {
     type: String,
     required: true,
     trim: true,
-    match: /^[A-Za-z0-9_\-.]{1,32}$/,
+    match: /^[A-Za-z0-9-]{1,64}$/m,
   },
   lastName: {
     type: String,
     required: true,
     trim: true,
-    match: /^[A-Za-z0-9_\-.]{1,32}$/,
+    match: /^[A-Za-z0-9-]{1,64}$/m,
   },
   salt: {
     type: Buffer,

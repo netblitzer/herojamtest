@@ -1,8 +1,27 @@
 'use strict';
 
 var openAboutForm = function openAboutForm() {
-  // check if we can switch to sign up
-  if (state.page !== 'About') {
+
+  // * Basic Page creation functions * //
+  // create the about form
+  var createAbout = function createAbout(prevPage, skip) {
+    ReactDOM.render(React.createElement(AboutForm, { csrf: state.csrf }), document.querySelector('#rendering'), slidePages(prevPage, initializeAbout, '#aboutWrapper', skip));
+  };
+
+  // initializer callback
+  var initializeAbout = function initializeAbout() {
+    getQuestions();
+  };
+
+  // if the page is undefined, it means we're starting out on this page
+  // and nothing else has been rendered yet.
+  // We're going to skip all the 'loading' if this is the case
+  if (state.page === undefined) {
+    // change page
+    state.page = 'About';
+
+    createAbout(null, true);
+  } else if (state.page !== 'About') {
     // push crumb
     state.crumb.push(state.page);
 
@@ -25,47 +44,169 @@ var openAboutForm = function openAboutForm() {
     // change page
     state.page = 'About';
 
-    // create the progress bar
-    var createProgress = function createProgress() {
-      ReactDOM.render(React.createElement(ProgressForm, null), document.querySelector('#navProgress'), createSignup);
-      document.querySelector('#navProgress .progress').classList += ' shown';
-    };
-
-    // create the about form
-    var createSignup = function createSignup() {
-      ReactDOM.render(React.createElement(AboutForm, { csrf: state.csrf }), document.querySelector('#rendering'), slidePages);
-    };
-
-    // start sliding out the previous page
-    var slidePages = function slidePages() {
-      prevPage.removeClass('page-opened').addClass('page-closed');
-      setTimeout(function () {
-        swapRendered();
-      }, 1000);
-    };
-
-    // swap the new page into the rendered scene and slide it in
-    var swapRendered = function swapRendered() {
-      var curRendered = $('#rendered');
-      var curRendering = $('#rendering');
-
-      // Swap the content between the two divs without rerendering it
-      curRendered.addClass('hidden').attr('id', 'rendering');
-      curRendering.removeClass('hidden').attr('id', 'rendered');
-
-      // clear the old content
-      document.querySelector('#rendering').innerHTML = '';
-      $('#aboutWrapper').addClass('page-opened');
-      $('#navProgress .progress').removeClass('shown');
-
-      ReactDOM.render(React.createElement(NavForm, null), document.querySelector('#head'));
-
-      $('.collapsible').collapsible();
-    };
-
     // start the chain
-    createProgress();
+    createProgress(function () {
+      createAbout(prevPage, false);
+    });
   }
+};
+// object holding all the questions
+var faq = {};
+
+// populate the FAQ list with responses from the server
+var fillQuestionList = function fillQuestionList(response) {
+
+  var sections = {};
+  var uid = 0; // UID used for opening the specified question
+  var data = {}; // used to populate the autocomplete
+
+  // parse the data
+  response.docs.forEach(function (q) {
+    // sort the questions into their sections
+    if (sections[q.section] === undefined) {
+      sections[q.section] = [];
+      uid += 100;
+    }
+
+    // push new question data into each section array
+    sections[q.section].push({
+      question: q.question,
+      answer: q.answer,
+      uid: 'uid' + uid,
+      secid: 'secid' + Math.floor(uid / 100)
+    });
+
+    faq[q.question] = {
+      question: q.question,
+      answer: q.answer,
+      uid: uid
+    };
+
+    data[q.question] = null;
+
+    uid++;
+  });
+
+  ReactDOM.render(React.createElement(FAQListForm, { sections: sections }), document.querySelector('#faqList'));
+
+  $('.collapsible').collapsible();
+  $('#answer').trigger('autoresize');
+  // set up the autocomplete
+  $('input.autocomplete').autocomplete({
+    data: data,
+    limit: 5,
+    onAutocomplete: function onAutocomplete(val) {
+      // find the menu the question is under
+      var bodyID = Math.floor(faq[val].uid / 100);
+      var headID = faq[val].uid;
+      var body = $('#secid' + bodyID);
+      var head = $('#uid' + headID);
+
+      // open the question
+      if (!body.hasClass('active')) body.click();
+
+      if (!head.hasClass('active')) head.click();
+    },
+    minLength: 2 // The minimum length of the input for the autocomplete to start. Default: 1.
+  });
+};
+
+// AJAX call to get questions
+var getQuestions = function getQuestions() {
+  sendAjax('GET', '/aboutQuestions', null, fillQuestionList);
+};
+
+// Function response to creating questions
+var createQuestionsResponse = function createQuestionsResponse(response) {
+  if (!response.success) {
+    return handleError(response.errorFull);
+  }
+
+  Materialize.toast(response.message, 3000);
+};
+// Function to create a new question and send it to the server
+var handleCreateQuestion = function handleCreateQuestion(e) {
+  e.preventDefault();
+
+  if ($('#createQuestion #question').val() === '' || $('#createQuestion #section').val() === '' || $('#createQuestion #answer').val() === '') {
+    handleError('Required parameters are missing.');
+    return false;
+  }
+
+  sendAjax('POST', $('#createQuestion').attr('action'), $('#createQuestion').serialize(), createQuestionsResponse);
+
+  return false;
+};
+
+// Function to create the FAQ form on the page and populate it
+// also handles the autocomplete section
+var FAQListForm = function FAQListForm(props) {
+
+  var keys = Object.keys(props.sections);
+  var secForms = [];
+
+  var _loop = function _loop(i) {
+    secForms.push(function () {
+      return React.createElement(SectionForm, { section: keys[i], responses: props.sections[keys[i]] });
+    }());
+  };
+
+  for (var i = 0; i < keys.length; i++) {
+    _loop(i);
+  }
+
+  return React.createElement(
+    'ul',
+    { className: 'collapsible', 'data-collapsible': 'accordion' },
+    secForms
+  );
+};
+
+// form for each section in the FAQ list
+var SectionForm = function SectionForm(props) {
+  var questions = props.responses.map(function (res) {
+    return React.createElement(QuestionForm, { question: res.question, answer: res.answer, uid: res.uid });
+  });
+
+  return React.createElement(
+    'li',
+    null,
+    React.createElement(
+      'div',
+      { className: 'collapsible-header', id: props.responses[0].secid },
+      props.section
+    ),
+    React.createElement(
+      'div',
+      { className: 'collapsible-body collapsible-thin-padding' },
+      React.createElement(
+        'ul',
+        { className: 'collapsible', 'data-collapsibile': 'accordion' },
+        questions
+      )
+    )
+  );
+};
+// form for each question populating the FAQ list
+var QuestionForm = function QuestionForm(props) {
+  return React.createElement(
+    'li',
+    null,
+    React.createElement(
+      'div',
+      { className: 'collapsible-header', id: props.uid },
+      props.question
+    ),
+    React.createElement(
+      'div',
+      { className: 'collapsible-body' },
+      React.createElement(
+        'span',
+        null,
+        props.answer
+      )
+    )
+  );
 };
 
 var AboutForm = function AboutForm(props) {
@@ -90,26 +231,23 @@ var AboutForm = function AboutForm(props) {
               'Have a question? Search to see if we have your answer.'
             ),
             React.createElement(
-              'form',
+              'div',
               null,
               React.createElement(
                 'div',
-                { className: 'input-field' },
-                React.createElement('input', { id: 'search', type: 'search', required: true }),
-                React.createElement(
-                  'label',
-                  { className: 'label-icon', 'for': 'search' },
-                  React.createElement(
-                    'i',
-                    { className: 'material-icons' },
-                    'search'
-                  )
-                ),
+                { className: 'search-wrapper input-field' },
                 React.createElement(
                   'i',
-                  { className: 'material-icons' },
-                  'close'
-                )
+                  { className: 'material-icons prefix' },
+                  'search'
+                ),
+                React.createElement('input', { id: 'search', type: 'text', className: 'autocomplete' }),
+                React.createElement(
+                  'label',
+                  { 'for': 'search' },
+                  'Search'
+                ),
+                React.createElement('div', { className: 'search-results' })
               )
             ),
             React.createElement(
@@ -117,64 +255,66 @@ var AboutForm = function AboutForm(props) {
               { className: 'grey-text text-darken-3' },
               'Frequently asked questions.'
             ),
+            React.createElement('div', { id: 'faqList' }),
             React.createElement(
-              'ul',
-              { className: 'collapsible', 'data-collapsible': 'accordion' },
+              'form',
+              {
+                id: 'createQuestion',
+                name: 'createQuestionForm',
+                onSubmit: handleCreateQuestion,
+                action: '/aboutCreate',
+                method: 'POST' },
               React.createElement(
-                'li',
-                null,
+                'div',
+                { className: 'row' },
                 React.createElement(
                   'div',
-                  { className: 'collapsible-header' },
-                  'Donations'
-                ),
-                React.createElement(
-                  'div',
-                  { className: 'collapsible-body collapsible-thin-padding' },
+                  { className: 'input-field col s12' },
+                  React.createElement('input', { id: 'question', type: 'text', name: 'question' }),
                   React.createElement(
-                    'span',
-                    null,
-                    React.createElement(
-                      'ul',
-                      { className: 'collapsible', 'data-collapsible': 'accordion' },
-                      React.createElement(
-                        'li',
-                        null,
-                        React.createElement(
-                          'div',
-                          { className: 'collapsible-header' },
-                          'How can I help?'
-                        ),
-                        React.createElement(
-                          'div',
-                          { className: 'collapsible-body' },
-                          React.createElement(
-                            'span',
-                            null,
-                            'If you are able to donate, 100% of all donations will go to Child\'s Play and help kids in hospitals around the world.'
-                          )
-                        )
-                      ),
-                      React.createElement(
-                        'li',
-                        null,
-                        React.createElement(
-                          'div',
-                          { className: 'collapsible-header' },
-                          'I can\'t afford to donate but my friends/family can.'
-                        ),
-                        React.createElement(
-                          'div',
-                          { className: 'collapsible-body' },
-                          React.createElement(
-                            'span',
-                            null,
-                            'If you want to be entered for prizes but can\'t afford to donate, as long as your friends or family donate and add your name in the comments of the donation, it will still count towards your donation total.'
-                          )
-                        )
-                      )
-                    )
+                    'label',
+                    { 'for': 'question', 'data-error': 'Invalid Email' },
+                    'Question'
                   )
+                )
+              ),
+              React.createElement(
+                'div',
+                { className: 'row' },
+                React.createElement(
+                  'div',
+                  { className: 'input-field col s12' },
+                  React.createElement('input', { id: 'section', type: 'text', name: 'section' }),
+                  React.createElement(
+                    'label',
+                    { 'for': 'section' },
+                    'Section'
+                  )
+                )
+              ),
+              React.createElement(
+                'div',
+                { className: 'row' },
+                React.createElement(
+                  'div',
+                  { 'class': 'input-field col s12' },
+                  React.createElement('textarea', { id: 'answer', name: 'answer', 'class': 'materialize-textarea' }),
+                  React.createElement(
+                    'label',
+                    { 'for': 'answer' },
+                    'Answer'
+                  )
+                )
+              ),
+              React.createElement('input', { type: 'hidden', name: '_csrf', value: props.csrf }),
+              React.createElement(
+                'button',
+                { className: 'btn white waves-effect waves-green black-text right', type: 'submit', name: 'action' },
+                'Submit',
+                React.createElement(
+                  'i',
+                  { className: 'material-icons right' },
+                  'send'
                 )
               )
             )
