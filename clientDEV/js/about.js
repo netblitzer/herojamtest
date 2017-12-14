@@ -217,8 +217,10 @@ const AboutForm = (props) => {
               
               </div>
               
+              
               <form
                 id="createQuestion"
+                className="hidden"
                 name="createQuestionForm"
                 onSubmit={handleCreateQuestion}
                 action="/aboutCreate"
@@ -246,6 +248,7 @@ const AboutForm = (props) => {
                   <i className="material-icons right">send</i>
                 </button>
               </form>
+              
             </div>
           </div>
         </div>

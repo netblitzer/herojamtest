@@ -260,6 +260,7 @@ var AboutForm = function AboutForm(props) {
               'form',
               {
                 id: 'createQuestion',
+                className: 'hidden',
                 name: 'createQuestionForm',
                 onSubmit: handleCreateQuestion,
                 action: '/aboutCreate',
